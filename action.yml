@@ -1,0 +1,45 @@
+name: 'OwnCloud Manager'
+description: 'Upload, download, or list files in OwnCloud via WebDAV'
+author: 'Fork-on-the-Table-Collective'
+
+branding:
+  icon: 'cloud'
+  color: 'blue'
+
+inputs:
+  action:
+    description: 'Action to perform: upload, download, or list'
+    required: true
+  server_url:
+    description: 'OwnCloud server base URL (e.g. https://cloud.example.com)'
+    required: true
+  username:
+    description: 'OwnCloud username'
+    required: true
+  password:
+    description: 'OwnCloud password or app token'
+    required: true
+  remote_path:
+    description: >
+      Path on OwnCloud.
+      For upload: destination file or directory path.
+      For download: source file path.
+      For list: directory path to list.
+    required: true
+  local_path:
+    description: >
+      Local file or directory path.
+      Required for upload (source) and download (destination).
+    required: false
+    default: ''
+
+outputs:
+  files:
+    description: >
+      JSON array of items.
+      upload: remote paths of uploaded files.
+      list: objects with href, type, size, and lastModified.
+
+runs:
+  using: 'node20'
+  main: 'dist/index.js'
