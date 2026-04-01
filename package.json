@@ -2,10 +2,11 @@
   "name": "owncloud-manager-action",
   "version": "1.0.0",
   "description": "GitHub Action to upload, download, and list files on OwnCloud via WebDAV",
-  "main": "src/main.js",
+  "main": "src/main.ts",
   "scripts": {
-    "build": "esbuild src/main.js --bundle --platform=node --format=cjs --outfile=dist/index.js",
-    "test": "node test/run.js"
+    "build": "esbuild src/main.ts --bundle --platform=node --format=cjs --outfile=dist/index.cjs",
+    "test": "npx tsx test/run.ts",
+    "typecheck": "tsc --noEmit"
   },
   "repository": {
     "type": "git",
@@ -26,6 +27,9 @@
     "undici": "^6.24.1"
   },
   "devDependencies": {
-    "esbuild": "^0.27.4"
+    "@types/node": "^24.0.0",
+    "esbuild": "^0.27.4",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0"
   }
 }

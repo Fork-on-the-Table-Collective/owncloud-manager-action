@@ -3,47 +3,47 @@ import path from 'path';
 import https from 'https';
 import http from 'http';
 
-/**
- * Build a fully-qualified WebDAV URL for the given remote path.
- * OwnCloud exposes WebDAV at /remote.php/webdav/<path>.
- *
- * @param {string} serverUrl  Base server URL, e.g. https://cloud.example.com
- * @param {string} remotePath Path inside OwnCloud, e.g. /documents/report.pdf
- * @returns {URL}
- */
-function buildUrl(serverUrl, remotePath) {
+export interface PropfindEntry {
+  href: string;
+  type: 'file' | 'directory';
+  size: number | null;
+  lastModified: string | null;
+}
+
+interface HttpResponse {
+  statusCode: number;
+  headers: http.IncomingHttpHeaders;
+  body: string;
+}
+
+interface RequestOptions {
+  hostname: string;
+  port: number;
+  path: string;
+  method: string;
+  protocol: string;
+  headers: Record<string, string | number>;
+}
+
+function buildUrl(serverUrl: string, remotePath: string): URL {
   const base = serverUrl.replace(/\/$/, '');
   const normalized = remotePath.startsWith('/') ? remotePath : `/${remotePath}`;
   return new URL(`${base}/remote.php/webdav${normalized}`);
 }
 
-/**
- * Create the Authorization header value for Basic auth.
- *
- * @param {string} username
- * @param {string} password
- * @returns {string}
- */
-function basicAuth(username, password) {
+function basicAuth(username: string, password: string): string {
   return `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`;
 }
 
-/**
- * Perform an HTTP/HTTPS request and return { statusCode, headers, body }.
- *
- * @param {object} options  node http/https request options
- * @param {Buffer|null} body  optional request body
- * @returns {Promise<{statusCode: number, headers: object, body: string}>}
- */
-function request(options, body = null) {
+function request(options: RequestOptions, body: Buffer | null = null): Promise<HttpResponse> {
   return new Promise((resolve, reject) => {
     const transport = options.protocol === 'http:' ? http : https;
     const req = transport.request(options, (res) => {
-      const chunks = [];
-      res.on('data', (chunk) => chunks.push(chunk));
+      const chunks: Buffer[] = [];
+      res.on('data', (chunk: Buffer) => chunks.push(chunk));
       res.on('end', () =>
         resolve({
-          statusCode: res.statusCode,
+          statusCode: res.statusCode!,
           headers: res.headers,
           body: Buffer.concat(chunks).toString('utf8'),
         })
@@ -55,16 +55,12 @@ function request(options, body = null) {
   });
 }
 
-/**
- * Ensure that every directory component of remotePath exists on OwnCloud,
- * creating missing directories with MKCOL.
- *
- * @param {string} serverUrl
- * @param {string} username
- * @param {string} password
- * @param {string} remotePath  e.g. /a/b/c/file.txt  — directories up to /a/b/c are ensured
- */
-async function ensureDirectories(serverUrl, username, password, remotePath) {
+async function ensureDirectories(
+  serverUrl: string,
+  username: string,
+  password: string,
+  remotePath: string
+): Promise<void> {
   const dir = path.posix.dirname(remotePath);
   if (dir === '/' || dir === '.') return;
 
@@ -73,9 +69,9 @@ async function ensureDirectories(serverUrl, username, password, remotePath) {
   for (const part of parts) {
     current += `/${part}`;
     const url = buildUrl(serverUrl, current);
-    const options = {
+    const options: RequestOptions = {
       hostname: url.hostname,
-      port: url.port || (url.protocol === 'https:' ? 443 : 80),
+      port: Number(url.port) || (url.protocol === 'https:' ? 443 : 80),
       path: url.pathname,
       method: 'MKCOL',
       protocol: url.protocol,
@@ -84,7 +80,6 @@ async function ensureDirectories(serverUrl, username, password, remotePath) {
       },
     };
     const res = await request(options);
-    // 201 = created, 405 = already exists — both are fine
     if (res.statusCode !== 201 && res.statusCode !== 405) {
       throw new Error(
         `Failed to create directory ${current}: HTTP ${res.statusCode}\n${res.body}`
@@ -93,23 +88,20 @@ async function ensureDirectories(serverUrl, username, password, remotePath) {
   }
 }
 
-/**
- * Upload a local file to OwnCloud.
- *
- * @param {string} serverUrl
- * @param {string} username
- * @param {string} password
- * @param {string} localPath   Absolute or relative local file path
- * @param {string} remotePath  Destination path on OwnCloud
- */
-async function uploadFile(serverUrl, username, password, localPath, remotePath) {
+async function uploadFile(
+  serverUrl: string,
+  username: string,
+  password: string,
+  localPath: string,
+  remotePath: string
+): Promise<void> {
   await ensureDirectories(serverUrl, username, password, remotePath);
 
   const fileContent = fs.readFileSync(localPath);
   const url = buildUrl(serverUrl, remotePath);
-  const options = {
+  const options: RequestOptions = {
     hostname: url.hostname,
-    port: url.port || (url.protocol === 'https:' ? 443 : 80),
+    port: Number(url.port) || (url.protocol === 'https:' ? 443 : 80),
     path: url.pathname,
     method: 'PUT',
     protocol: url.protocol,
@@ -126,18 +118,14 @@ async function uploadFile(serverUrl, username, password, localPath, remotePath) 
   }
 }
 
-/**
- * Recursively upload a local directory to OwnCloud.
- *
- * @param {string} serverUrl
- * @param {string} username
- * @param {string} password
- * @param {string} localDir    Local directory path
- * @param {string} remoteDir   Destination directory path on OwnCloud
- * @returns {Promise<string[]>}  List of uploaded remote paths
- */
-async function uploadDirectory(serverUrl, username, password, localDir, remoteDir) {
-  const uploaded = [];
+async function uploadDirectory(
+  serverUrl: string,
+  username: string,
+  password: string,
+  localDir: string,
+  remoteDir: string
+): Promise<string[]> {
+  const uploaded: string[] = [];
   const entries = fs.readdirSync(localDir, { withFileTypes: true });
   for (const entry of entries) {
     const localEntry = path.join(localDir, entry.name);
@@ -153,20 +141,17 @@ async function uploadDirectory(serverUrl, username, password, localDir, remoteDi
   return uploaded;
 }
 
-/**
- * Download a file from OwnCloud to a local path.
- *
- * @param {string} serverUrl
- * @param {string} username
- * @param {string} password
- * @param {string} remotePath  Source path on OwnCloud
- * @param {string} localPath   Destination local file path
- */
-async function downloadFile(serverUrl, username, password, remotePath, localPath) {
+async function downloadFile(
+  serverUrl: string,
+  username: string,
+  password: string,
+  remotePath: string,
+  localPath: string
+): Promise<void> {
   const url = buildUrl(serverUrl, remotePath);
-  const options = {
+  const options: RequestOptions = {
     hostname: url.hostname,
-    port: url.port || (url.protocol === 'https:' ? 443 : 80),
+    port: Number(url.port) || (url.protocol === 'https:' ? 443 : 80),
     path: url.pathname,
     method: 'GET',
     protocol: url.protocol,
@@ -179,8 +164,8 @@ async function downloadFile(serverUrl, username, password, remotePath, localPath
     const transport = options.protocol === 'http:' ? http : https;
     const req = transport.request(options, (res) => {
       if (res.statusCode !== 200) {
-        const chunks = [];
-        res.on('data', (c) => chunks.push(c));
+        const chunks: Buffer[] = [];
+        res.on('data', (c: Buffer) => chunks.push(c));
         res.on('end', () =>
           reject(
             new Error(
@@ -202,14 +187,8 @@ async function downloadFile(serverUrl, username, password, remotePath, localPath
   });
 }
 
-/**
- * Parse a WebDAV PROPFIND XML response and extract file/directory entries.
- *
- * @param {string} xml
- * @returns {Array<{href: string, type: string, size: number|null, lastModified: string|null}>}
- */
-function parsePropfind(xml) {
-  const items = [];
+function parsePropfind(xml: string): PropfindEntry[] {
+  const items: PropfindEntry[] = [];
   const responseRegex = /<[Dd]:response>([\s\S]*?)<\/[Dd]:response>/g;
   let responseMatch;
   while ((responseMatch = responseRegex.exec(xml)) !== null) {
@@ -220,7 +199,7 @@ function parsePropfind(xml) {
     const href = decodeURIComponent(hrefMatch[1]);
 
     const isCollection = /<[Dd]:collection\s*\/>/.test(block);
-    const type = isCollection ? 'directory' : 'file';
+    const type: 'file' | 'directory' = isCollection ? 'directory' : 'file';
 
     const sizeMatch = /<[Dd]:getcontentlength>(.*?)<\/[Dd]:getcontentlength>/.exec(block);
     const size = sizeMatch ? parseInt(sizeMatch[1], 10) : null;
@@ -234,17 +213,13 @@ function parsePropfind(xml) {
   return items;
 }
 
-/**
- * List files and directories at the given remote path.
- *
- * @param {string} serverUrl
- * @param {string} username
- * @param {string} password
- * @param {string} remotePath  Path on OwnCloud to list
- * @param {number} depth       WebDAV depth (0 = resource only, 1 = immediate children)
- * @returns {Promise<Array<{href: string, type: string, size: number|null, lastModified: string|null}>>}
- */
-async function listFiles(serverUrl, username, password, remotePath, depth = 1) {
+async function listFiles(
+  serverUrl: string,
+  username: string,
+  password: string,
+  remotePath: string,
+  depth: number = 1
+): Promise<PropfindEntry[]> {
   const url = buildUrl(serverUrl, remotePath);
   const body = Buffer.from(
     '<?xml version="1.0" encoding="UTF-8"?>' +
@@ -257,9 +232,9 @@ async function listFiles(serverUrl, username, password, remotePath, depth = 1) {
       '</d:propfind>'
   );
 
-  const options = {
+  const options: RequestOptions = {
     hostname: url.hostname,
-    port: url.port || (url.protocol === 'https:' ? 443 : 80),
+    port: Number(url.port) || (url.protocol === 'https:' ? 443 : 80),
     path: url.pathname,
     method: 'PROPFIND',
     protocol: url.protocol,

@@ -1,0 +1,58 @@
+name: Test OwnCloud Manager
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-owncloud:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create test file
+        run: echo "Hello from test workflow — $(date -u)" > test-upload.txt
+
+      - name: Upload file
+        uses: ./
+        id: upload
+        with:
+          action: upload
+          server_url: ${{ secrets.OWNCLOUD_SERVER_URL }}
+          username: ${{ secrets.OWNCLOUD_USERNAME }}
+          password: ${{ secrets.OWNCLOUD_PASSWORD }}
+          remote_path: /ci-test/test-upload.txt
+          local_path: test-upload.txt
+
+      - name: List files
+        uses: ./
+        id: list
+        with:
+          action: list
+          server_url: ${{ secrets.OWNCLOUD_SERVER_URL }}
+          username: ${{ secrets.OWNCLOUD_USERNAME }}
+          password: ${{ secrets.OWNCLOUD_PASSWORD }}
+          remote_path: /ci-test
+
+      - name: Show listed files
+        run: echo '${{ steps.list.outputs.files }}'
+
+      - name: Download file
+        uses: ./
+        id: download
+        with:
+          action: download
+          server_url: ${{ secrets.OWNCLOUD_SERVER_URL }}
+          username: ${{ secrets.OWNCLOUD_USERNAME }}
+          password: ${{ secrets.OWNCLOUD_PASSWORD }}
+          remote_path: /ci-test/test-upload.txt
+          local_path: test-download.txt
+
+      - name: Verify downloaded file
+        run: |
+          echo "=== Original ==="
+          cat test-upload.txt
+          echo "=== Downloaded ==="
+          cat test-download.txt
+          diff test-upload.txt test-download.txt && echo "Files match!"

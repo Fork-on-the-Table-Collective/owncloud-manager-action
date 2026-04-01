@@ -3,9 +3,8 @@ import path from 'path';
 import fs from 'fs';
 import { uploadFile, uploadDirectory, downloadFile, listFiles } from './owncloud.js';
 
-async function run() {
+async function run(): Promise<void> {
   try {
-    // Normalize to lowercase + trimmed so the includes() check below is case/whitespace-insensitive.
     const action = core.getInput('action', { required: true }).toLowerCase().trim();
     const serverUrl = core.getInput('server_url', { required: true }).replace(/\/$/, '');
     const username = core.getInput('username', { required: true });
@@ -44,7 +43,6 @@ async function run() {
     } else if (action === 'list') {
       core.info(`Listing contents of "${remotePath}" …`);
       const items = await listFiles(serverUrl, username, password, remotePath);
-      // Filter out the requested path itself (first entry is always the container)
       const entries = items.filter((item) => {
         const normalized = item.href.replace(/\/$/, '');
         const suffix = `/remote.php/webdav${remotePath.replace(/\/$/, '')}`;
@@ -58,7 +56,7 @@ async function run() {
       core.setOutput('files', JSON.stringify(entries));
     }
   } catch (error) {
-    core.setFailed(error.message);
+    core.setFailed((error as Error).message);
   }
 }
 

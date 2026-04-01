@@ -1,27 +1,22 @@
-/**
- * Unit tests for owncloud.js helper functions.
- * These tests run without a real OwnCloud server.
- */
-
 import assert from 'assert';
 import { buildUrl, uploadFile, uploadDirectory, downloadFile, listFiles, parsePropfind } from '../src/owncloud.js';
 
 let passed = 0;
 let failed = 0;
 
-function test(name, fn) {
+function test(name: string, fn: () => void): void {
   try {
     fn();
     console.log(`  ✓ ${name}`);
     passed++;
   } catch (err) {
     console.error(`  ✗ ${name}`);
-    console.error(`    ${err.message}`);
+    console.error(`    ${(err as Error).message}`);
     failed++;
   }
 }
 
-console.log('\nowncloud.js unit tests\n');
+console.log('\nowncloud.ts unit tests\n');
 
 // buildUrl
 test('buildUrl: trailing slash stripped from server URL', () => {

@@ -41,5 +41,5 @@ outputs:
       list: objects with href, type, size, and lastModified.
 
 runs:
-  using: 'node20'
-  main: 'dist/index.js'
+  using: 'node24'
+  main: 'dist/index.cjs'

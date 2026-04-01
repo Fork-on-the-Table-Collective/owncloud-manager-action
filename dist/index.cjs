@@ -1,3 +1,4 @@
+"use strict";
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -19074,11 +19075,11 @@ function info(message) {
   process.stdout.write(message + os4.EOL);
 }
 
-// src/main.js
+// src/main.ts
 var import_path2 = __toESM(require("path"), 1);
 var import_fs3 = __toESM(require("fs"), 1);
 
-// src/owncloud.js
+// src/owncloud.ts
 var import_fs2 = __toESM(require("fs"), 1);
 var import_path = __toESM(require("path"), 1);
 var import_https = __toESM(require("https"), 1);
@@ -19121,7 +19122,7 @@ async function ensureDirectories(serverUrl, username, password, remotePath) {
     const url = buildUrl(serverUrl, current);
     const options = {
       hostname: url.hostname,
-      port: url.port || (url.protocol === "https:" ? 443 : 80),
+      port: Number(url.port) || (url.protocol === "https:" ? 443 : 80),
       path: url.pathname,
       method: "MKCOL",
       protocol: url.protocol,
@@ -19144,7 +19145,7 @@ async function uploadFile(serverUrl, username, password, localPath, remotePath) 
   const url = buildUrl(serverUrl, remotePath);
   const options = {
     hostname: url.hostname,
-    port: url.port || (url.protocol === "https:" ? 443 : 80),
+    port: Number(url.port) || (url.protocol === "https:" ? 443 : 80),
     path: url.pathname,
     method: "PUT",
     protocol: url.protocol,
@@ -19180,7 +19181,7 @@ async function downloadFile(serverUrl, username, password, remotePath, localPath
   const url = buildUrl(serverUrl, remotePath);
   const options = {
     hostname: url.hostname,
-    port: url.port || (url.protocol === "https:" ? 443 : 80),
+    port: Number(url.port) || (url.protocol === "https:" ? 443 : 80),
     path: url.pathname,
     method: "GET",
     protocol: url.protocol,
@@ -19242,7 +19243,7 @@ async function listFiles(serverUrl, username, password, remotePath, depth = 1) {
   );
   const options = {
     hostname: url.hostname,
-    port: url.port || (url.protocol === "https:" ? 443 : 80),
+    port: Number(url.port) || (url.protocol === "https:" ? 443 : 80),
     path: url.pathname,
     method: "PROPFIND",
     protocol: url.protocol,
@@ -19261,7 +19262,7 @@ ${res.body}`);
   return parsePropfind(res.body);
 }
 
-// src/main.js
+// src/main.ts
 async function run() {
   try {
     const action = getInput("action", { required: true }).toLowerCase().trim();
