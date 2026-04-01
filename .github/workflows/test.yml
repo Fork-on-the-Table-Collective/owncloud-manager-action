@@ -25,6 +25,18 @@ jobs:
           remote_path: /ci-test/test-upload.txt
           local_path: test-upload.txt
 
+      - name: Upload zipped file
+        uses: ./
+        id: upload-zip
+        with:
+          action: upload
+          server_url: ${{ secrets.OWNCLOUD_SERVER_URL }}
+          username: ${{ secrets.OWNCLOUD_USERNAME }}
+          password: ${{ secrets.OWNCLOUD_PASSWORD }}
+          remote_path: /ci-test/test-upload.zip
+          local_path: test-upload.txt
+          zip_name: test-upload.zip
+
       - name: List files
         uses: ./
         id: list

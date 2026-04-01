@@ -32,6 +32,12 @@ inputs:
       Required for upload (source) and download (destination).
     required: false
     default: ''
+  zip_name:
+    description: >
+      If set, zip local_path into a file with this name before uploading.
+      Only used with the upload action. Example: "archive.zip"
+    required: false
+    default: ''
 
 outputs:
   files:
