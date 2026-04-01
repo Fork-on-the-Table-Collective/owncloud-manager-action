@@ -20,7 +20,7 @@
   },
   "homepage": "https://github.com/Fork-on-the-Table-Collective/owncloud-manager-action#readme",
   "dependencies": {
-    "@actions/core": "^1.11.1"
+    "@actions/core": "^3.0.0"
   },
   "devDependencies": {
     "@vercel/ncc": "^0.38.4"
