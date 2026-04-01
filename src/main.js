@@ -1,12 +1,11 @@
-'use strict';
-
-const core = require('@actions/core');
-const path = require('path');
-const fs = require('fs');
-const { uploadFile, uploadDirectory, downloadFile, listFiles } = require('./owncloud');
+import * as core from '@actions/core';
+import path from 'path';
+import fs from 'fs';
+import { uploadFile, uploadDirectory, downloadFile, listFiles } from './owncloud.js';
 
 async function run() {
   try {
+    // Normalize to lowercase + trimmed so the includes() check below is case/whitespace-insensitive.
     const action = core.getInput('action', { required: true }).toLowerCase().trim();
     const serverUrl = core.getInput('server_url', { required: true }).replace(/\/$/, '');
     const username = core.getInput('username', { required: true });

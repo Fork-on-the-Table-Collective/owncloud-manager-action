@@ -4,7 +4,7 @@
   "description": "GitHub Action to upload, download, and list files on OwnCloud via WebDAV",
   "main": "src/main.js",
   "scripts": {
-    "build": "ncc build src/main.js -o dist --license licenses.txt",
+    "build": "esbuild src/main.js --bundle --platform=node --format=cjs --outfile=dist/index.js",
     "test": "node test/run.js"
   },
   "repository": {
@@ -14,7 +14,7 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "bugs": {
     "url": "https://github.com/Fork-on-the-Table-Collective/owncloud-manager-action/issues"
   },
@@ -22,10 +22,10 @@
   "dependencies": {
     "@actions/core": "^3.0.0"
   },
-  "devDependencies": {
-    "@vercel/ncc": "^0.38.4"
-  },
   "overrides": {
     "undici": "^6.24.1"
+  },
+  "devDependencies": {
+    "esbuild": "^0.27.4"
   }
 }

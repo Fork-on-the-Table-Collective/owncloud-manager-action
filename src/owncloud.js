@@ -1,9 +1,7 @@
-'use strict';
-
-const fs = require('fs');
-const path = require('path');
-const https = require('https');
-const http = require('http');
+import fs from 'fs';
+import path from 'path';
+import https from 'https';
+import http from 'http';
 
 /**
  * Build a fully-qualified WebDAV URL for the given remote path.
@@ -281,4 +279,4 @@ async function listFiles(serverUrl, username, password, remotePath, depth = 1) {
   return parsePropfind(res.body);
 }
 
-module.exports = { uploadFile, uploadDirectory, downloadFile, listFiles, buildUrl };
+export { uploadFile, uploadDirectory, downloadFile, listFiles, buildUrl, parsePropfind };

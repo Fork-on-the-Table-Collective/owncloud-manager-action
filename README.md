@@ -80,7 +80,7 @@ A Node.js 20 GitHub Action to **upload**, **download**, and **list** files on an
 
 ```bash
 npm install          # install dependencies
-npm run build        # compile dist/index.js with ncc
+npm run build        # bundle dist/index.js with esbuild
 npm test             # run unit tests
 ```
 
